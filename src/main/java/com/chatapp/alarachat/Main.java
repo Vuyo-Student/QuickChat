@@ -76,10 +76,14 @@ public class Main {
     }
 
 
-    private static User registerFlow() { 
+    private static User registerFlow() {
         System.out.println("\n--- REGISTRATION ---");
-        System.out.print("First name: ");  String first = sc.nextLine().trim();
-        System.out.print("Last name: ");   String last  = sc.nextLine().trim();
+
+        System.out.print("First name: ");
+        String first = sc.nextLine().trim();
+
+        System.out.print("Last name: ");
+        String last = sc.nextLine().trim();
 
         String username;
         while (true) {
@@ -107,6 +111,7 @@ public class Main {
             System.out.println(msg);
             if (msg.equals(UserValidator.CELL_OK)) break;
         }
+
         return new User(first, last, username, password, cell);
     }
 
@@ -118,6 +123,7 @@ public class Main {
             String u = sc.nextLine().trim();
             System.out.print("Password: ");
             String p = sc.nextLine();
+
             String msg = validator.validateLogin(u, p, stored);
             System.out.println(msg);
             if (msg.startsWith(UserValidator.LOGIN_OK_PREFIX)) return true;
@@ -135,7 +141,8 @@ public class Main {
         System.out.print("Choice: ");
     }
 
-    //  Part 3: Stored Messages
+
+    //Part 3: Stored Messages
 
     private static void storedMessagesFlow() {
         boolean back = false;
@@ -212,7 +219,8 @@ public class Main {
             : "No message found with hash " + hash);
     }
 
-    //  Send-message flow (Part 2) — Now passes sender
+
+    //Send-message flow (Part 2) — passes sender, awaits disregard confirm (finally)
 
     private static void sendMessagesFlow(int allowed) {
         if (allowed <= 0) {
@@ -238,7 +246,6 @@ public class Main {
                 i--; continue;
             }
 
-            //Sender now comes from the logged-in user
             Message m = manager.composeMessage(
                     currentUser.getUsername(), recipient, body);
 
@@ -253,16 +260,27 @@ public class Main {
             int action = readIntSafely();
 
             switch (action) {
-                case 1: manager.sendMessage(m);
-                        System.out.println("Message successfully sent"); break;
-                case 2: manager.disregardMessage(m);
-                        System.out.println("Press 0 to delete the message."); break;
-                case 3: manager.storeMessage(m);
-                        System.out.println("Message successfully stored."); break;
+                case 1:
+                    manager.sendMessage(m);
+                    System.out.println("Message successfully sent");
+                    break;
+
+                case 2:
+                    manager.disregardMessage(m);
+                    System.out.println("Press 0 to delete the message.");
+                    readIntSafely();                 // ← NEW: actually wait for the 0
+                    break;
+
+                case 3:
+                    manager.storeMessage(m);
+                    System.out.println("Message successfully stored.");
+                    break;
+
                 default:
                     System.out.println("Unknown action – treating as disregard");
                     manager.disregardMessage(m);
                     System.out.println("Press 0 to delete the message.");
+                    readIntSafely();                 // ← NEW: same fix on the fallback path
             }
         }
 
