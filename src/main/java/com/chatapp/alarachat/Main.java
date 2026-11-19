@@ -267,8 +267,8 @@ public class Main {
 
                 case 2:
                     manager.disregardMessage(m);
-                    System.out.println("Press 0 to delete the message.");
-                    readIntSafely();                 // ← NEW: actually wait for the 0
+                    System.out.println("Enter 0 to delete the message.");
+                    readIntSafely();
                     break;
 
                 case 3:
@@ -279,8 +279,8 @@ public class Main {
                 default:
                     System.out.println("Unknown action – treating as disregard");
                     manager.disregardMessage(m);
-                    System.out.println("Press 0 to delete the message.");
-                    readIntSafely();                 // ← NEW: same fix on the fallback path
+                    System.out.println("Enter 0 to delete the message.");
+                    readIntSafely();
             }
         }
 
