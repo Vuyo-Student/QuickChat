@@ -18,7 +18,7 @@ public class Message implements Serializable {
 
     private String messageId;
     private int    messageNumber;
-    private String sender;      // NEW — username of the logged-in user
+    private String sender;
     private String recipient;
     private String messageBody;
     private String messageHash;
@@ -26,13 +26,13 @@ public class Message implements Serializable {
 
     public Message() { }
 
-    /** Legacy constructor — sender defaults to null. */
+    
     public Message(String messageId, int messageNumber,
                    String recipient, String messageBody) {
         this(messageId, messageNumber, null, recipient, messageBody);
     }
 
-    /** Full constructor with sender (Part 3). */
+    // Full constructor with sender.
     public Message(String messageId, int messageNumber, String sender,
                    String recipient, String messageBody) {
         this.messageId     = messageId;
@@ -44,19 +44,13 @@ public class Message implements Serializable {
     }
 
 
-    /**
-     * Builds a 10-digit message ID using String.format (no StringBuilder).
-     */
+     //Builds a 10-digit message ID using String.format.
     public static String generateMessageId() {
         long n = (long) (Math.random() * 10_000_000_000L);
         return String.format("%010d", n);
     }
 
 
-    /**
-     * Hash = first2(ID) : number : FIRSTWORDLASTWORD (uppercased).
-     * Punctuation is stripped so "Hi Mike, ... tonight?" -> "HITONIGHT".
-     */
     private String generateHash() {
         String id = (messageId == null || messageId.length() < 2)
                   ? "00" : messageId.substring(0, 2);

@@ -50,7 +50,7 @@ public class Main {
             System.out.print("\nHow many messages do you wish to send in this session? ");
             int count = readIntSafely();
             manager = new MessageManagerImpl(count);
-            manager.loadStoredFromJson();          // ← Part 3: reload persisted messages
+            manager.loadStoredFromJson();
 
             boolean running = true;
             while (running) {
@@ -76,7 +76,7 @@ public class Main {
     }
 
 
-    private static User registerFlow() { /* unchanged — see previous version */ 
+    private static User registerFlow() { 
         System.out.println("\n--- REGISTRATION ---");
         System.out.print("First name: ");  String first = sc.nextLine().trim();
         System.out.print("Last name: ");   String last  = sc.nextLine().trim();
@@ -135,10 +135,7 @@ public class Main {
         System.out.print("Choice: ");
     }
 
-
-    // ============================================================
-    //  Part 3: Stored Messages submenu
-    // ============================================================
+    //  Part 3: Stored Messages
 
     private static void storedMessagesFlow() {
         boolean back = false;
@@ -215,10 +212,7 @@ public class Main {
             : "No message found with hash " + hash);
     }
 
-
-    // ============================================================
-    //  Send-message flow (Part 2) — now passes sender
-    // ============================================================
+    //  Send-message flow (Part 2) — Now passes sender
 
     private static void sendMessagesFlow(int allowed) {
         if (allowed <= 0) {
@@ -244,7 +238,7 @@ public class Main {
                 i--; continue;
             }
 
-            // ← sender now comes from the logged-in user
+            //Sender now comes from the logged-in user
             Message m = manager.composeMessage(
                     currentUser.getUsername(), recipient, body);
 

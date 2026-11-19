@@ -33,7 +33,7 @@ public class MessageTest {
     }
 
     /**
-     * Part 2 Question example: Keegan's dinner message hashes to 00:0:HITONIGHT.
+     * //Part 2 Question example: Keegan's dinner message hashes to 00:0:HITONIGHT.
      * Punctuation in "Hi Mike," and "tonight?" is stripped before the
      * concatenation, so the hash word is HITONIGHT, not HI,MIKETONIGHT?.
      */

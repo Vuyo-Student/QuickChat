@@ -45,7 +45,7 @@ public class StoredMessagesTest {
         mgr.storeMessage(m1);
         mgr.storeMessage(m2);
 
-        // New manager, same file — simulates a fresh app start
+        // New manager, same file — Simulates a fresh app start
         MessageManagerImpl fresh = new MessageManagerImpl(10, jsonFile);
         fresh.loadStoredFromJson();
 
@@ -56,7 +56,7 @@ public class StoredMessagesTest {
     @DisplayName("loadStoredFromJson is a no-op when the file does not exist")
     public void loadMissingFile() {
         MessageManagerImpl fresh = new MessageManagerImpl(10, jsonFile);
-        fresh.loadStoredFromJson();   // should not throw
+        fresh.loadStoredFromJson();
         assertEquals(0, fresh.getStoredMessages().length);
     }
 
@@ -67,8 +67,8 @@ public class StoredMessagesTest {
         mgr.storeMessage(m);
 
         Message[] copy = mgr.getStoredMessages();
-        copy[0] = null;                       // mutate the copy
-        assertEquals(1, mgr.getStoredMessages().length);   // original untouched
+        copy[0] = null;
+        assertEquals(1, mgr.getStoredMessages().length);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class StoredMessagesTest {
         assertTrue(mgr.deleteByHash(hash));
         assertEquals(0, mgr.getStoredMessages().length);
 
-        // Reload from disk — deletion must be persisted
+        // Reload from disk — Deletion must be persisted
         MessageManagerImpl fresh = new MessageManagerImpl(10, jsonFile);
         fresh.loadStoredFromJson();
         assertEquals(0, fresh.getStoredMessages().length);

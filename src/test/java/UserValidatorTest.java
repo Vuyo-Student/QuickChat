@@ -27,7 +27,7 @@ public class UserValidatorTest {
         v = new UserValidator();
     }
 
-    // ---------------- USERNAME ----------------
+    //USERNAME
     @Test
     @DisplayName("Username with underscore & 5 or fewer chars passes")
     public void usernamePasses() {
@@ -47,7 +47,7 @@ public class UserValidatorTest {
         assertEquals(UserValidator.USERNAME_FAIL, v.validateUsername("k_yle1"));
     }
 
-    // ---------------- PASSWORD ----------------
+    //PASSWORD
     @Test
     @DisplayName("Valid password passes")
     public void passwordPasses() {
@@ -78,7 +78,7 @@ public class UserValidatorTest {
         assertEquals(UserValidator.PASSWORD_FAIL, v.validatePassword("Password1"));
     }
 
-    // ---------------- CELLPHONE ----------------
+    //CELLPHONE
     @Test
     @DisplayName("Valid SA numbers pass")
     public void cellphonePasses() {
@@ -99,7 +99,7 @@ public class UserValidatorTest {
         assertEquals(UserValidator.CELL_FAIL, v.validateCellphone("08212345678"));
     }
 
-    // ---------------- LOGIN ----------------
+    //LOGIN
     @Test
     @DisplayName("Correct login returns welcome message")
     public void loginSuccess() {

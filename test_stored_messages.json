@@ -1,10 +1,10 @@
 [
   {
-    "messageId": "9687462577",
+    "messageId": "1865507711",
     "messageNumber": 1,
     "recipient": "+27821234567",
     "messageBody": "persist me",
-    "messageHash": "96:1:PERSISTME",
+    "messageHash": "18:1:PERSISTME",
     "status": "STORED"
   }
 ]

@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * In-memory message store with JSON write-through persistence.
+ * //In-memory message store with JSON write-through persistence.
  *
  * @see <a href="https://github.com/google/gson">https://github.com/google/gson</a>
  */
@@ -55,7 +55,7 @@ public class MessageManagerImpl implements MessageManager {
     }
 
 
-    // ---------- Validation ----------
+    //Validation
 
     @Override
     public String validateRecipient(String recipient) {
@@ -74,7 +74,7 @@ public class MessageManagerImpl implements MessageManager {
     }
 
 
-    // ---------- Compose ----------
+    //Compose
 
     @Override
     public Message composeMessage(String recipient, String body) {
@@ -89,7 +89,7 @@ public class MessageManagerImpl implements MessageManager {
     }
 
 
-    // ---------- Status changes ----------
+    //Status changes
 
     @Override
     public void sendMessage(Message m) {
@@ -113,7 +113,7 @@ public class MessageManagerImpl implements MessageManager {
     }
 
 
-    // ---------- Read APIs ----------
+    //Read APIs
 
     @Override
     public Message[] getSentMessages() {
@@ -126,7 +126,7 @@ public class MessageManagerImpl implements MessageManager {
     }
 
 
-    // ---------- JSON persistence ----------
+    //JSON persistence
 
     @Override
     public void saveStoredToJson() {
@@ -140,8 +140,8 @@ public class MessageManagerImpl implements MessageManager {
     }
 
     /**
-     * Reads {@code jsonFile} and repopulates the in-memory stored array.
-     * Safe when the file does not yet exist (first ever run).
+     * //Reads {@code jsonFile} and repopulates the in-memory stored array.
+     *
      */
     @Override
     public void loadStoredFromJson() {
@@ -161,14 +161,14 @@ public class MessageManagerImpl implements MessageManager {
                 }
                 if (m.getMessageNumber() > maxNum) maxNum = m.getMessageNumber();
             }
-            messageCounter = maxNum;  // continue numbering without collision
+            messageCounter = maxNum;
         } catch (IOException | JsonParseException e) {
             System.err.println("Could not load JSON: " + e.getMessage());
         }
     }
 
 
-    // ---------- Part 3: report helpers ----------
+    //Part 3: report helpers
 
     @Override
     public Message getLongestStoredMessage() {
@@ -218,12 +218,11 @@ public class MessageManagerImpl implements MessageManager {
         if (hash == null) return false;
         for (int i = 0; i < storedCount; i++) {
             if (hash.equalsIgnoreCase(storedMessages[i].getMessageHash())) {
-                // shift left
                 for (int j = i; j < storedCount - 1; j++)
                     storedMessages[j] = storedMessages[j + 1];
                 storedMessages[storedCount - 1] = null;
                 storedCount--;
-                saveStoredToJson();   // persist the deletion
+                saveStoredToJson();
                 return true;
             }
         }
