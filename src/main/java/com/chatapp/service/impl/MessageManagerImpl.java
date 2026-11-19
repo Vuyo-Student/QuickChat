@@ -14,81 +14,57 @@ import com.chatapp.model.Message;
 import com.chatapp.service.MessageManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
+/**
+ * In-memory message store with JSON write-through persistence.
+ *
+ * @see <a href="https://github.com/google/gson">https://github.com/google/gson</a>
+ */
 public class MessageManagerImpl implements MessageManager {
 
-
-    /**
-     * Filename for JSON persistence.
-     * Declared "final" because it is set once in the constructor.
-     * Two constructors allow Main and tests to use different files
-     * (so automated tests never pollute the production data).
-     */
     private final String jsonFile;
 
-
-    /** Messages the user chose "Send Message" on. */
-    private Message[] sentMessages;
-
-    /** Messages the user chose "Disregard Message" on. */
-    private Message[] disregardedMessages;
-
-    /** Messages the user chose "Store Message" on (also persisted to JSON). */
-    private Message[] storedMessages;
-
+    private final Message[] sentMessages;
+    private final Message[] disregardedMessages;
+    private final Message[] storedMessages;
 
     private int sentCount;
     private int disregardedCount;
     private int storedCount;
 
-    /** Global auto-incrementing message number — starts at 0, becomes 1, 2, 3... */
     private int messageCounter = 0;
 
 
-    /** Production constructor (used by Main). Writes to the default JSON file. */
     public MessageManagerImpl(int capacity) {
         this(capacity, "stored_messages.json");
     }
 
-    /**
-     * Test constructor — allows a separate JSON file per test run.
-     * Uses Math.max to enforce a floor of 10 slots regardless of caller input.
-     */
     public MessageManagerImpl(int capacity, String jsonFile) {
         this.jsonFile = jsonFile;
-        int cap = Math.max(capacity, 10);          // Math.max = operator/method call
-        sentMessages        = new Message[cap];    // array allocation
+        int cap = Math.max(capacity, 10);
+        sentMessages        = new Message[cap];
         disregardedMessages = new Message[cap];
         storedMessages      = new Message[cap];
     }
 
 
-    /**
-     * Validates the recipient cell number.
-     *
-     * Regex `^(\+27|0)[6-8][0-9]{8}$` accepts:
-     *   - 0821234567    (SA national, 0 + 6/7/8 + 8 digits)
-     *   - +27821234567  (SA international, +27 + 6/7/8 + 8 digits)
-     *
-     * Returns exactly "Recipient accepted" or the brief's error string.
-     */
+    // ---------- Validation ----------
+
     @Override
     public String validateRecipient(String recipient) {
         if (recipient == null) return "Recipient number incorrectly formatted.";
-        if (!recipient.matches("^(\\+27|0)[6-8][0-9]{8}$"))
+        if (!recipient.matches("^\\+27[6-8][0-9]{8}$"))
             return "Recipient number incorrectly formatted.";
         return "Recipient accepted";
     }
 
-    /**
-     * Validates the message body length.
-     * The brief requires a strict limit of 250 characters (inclusive).
-     * The reply strings must match the brief exactly — the tests rely on them.
-     */
     @Override
     public String validateMessageBody(String body) {
         if (body == null) return "Please enter a message of less than 250 characters";
@@ -98,37 +74,29 @@ public class MessageManagerImpl implements MessageManager {
     }
 
 
-    /**
-     * Builds a new Message and returns it.
-     * The ID, number and hash are all generated inside Message / here.
-     *
-     * Operators used:
-     *   messageCounter++   pre-increment the running counter
-     *
-     * The returned Message is NOT filed yet — the caller decides
-     * (sendMessage / storeMessage / disregardMessage).
-     */
+    // ---------- Compose ----------
+
     @Override
     public Message composeMessage(String recipient, String body) {
-        messageCounter++;                                   // 1, 2, 3, ...
-        String id = Message.generateMessageId();            // 10 random digits
-        return new Message(id, messageCounter, recipient, body);
+        return composeMessage(null, recipient, body);
+    }
+
+    @Override
+    public Message composeMessage(String sender, String recipient, String body) {
+        messageCounter++;
+        String id = Message.generateMessageId();
+        return new Message(id, messageCounter, sender, recipient, body);
     }
 
 
-    /**
-     * "Send Message": status SENT, then file in sentMessages[].
-     * Uses a guard check so we never write past the array end.
-     */
+    // ---------- Status changes ----------
+
     @Override
     public void sendMessage(Message m) {
         m.setStatus("SENT");
         if (sentCount < sentMessages.length) sentMessages[sentCount++] = m;
     }
 
-    /**
-     * "Disregard Message": status DISREGARDED, file in disregardedMessages[].
-     */
     @Override
     public void disregardMessage(Message m) {
         m.setStatus("DISREGARDED");
@@ -136,36 +104,30 @@ public class MessageManagerImpl implements MessageManager {
             disregardedMessages[disregardedCount++] = m;
     }
 
-    /**
-     * "Store Message": status STORED, file in storedMessages[], persist to JSON.
-     * Persistence is immediate — the JSON file is updated on every store, so
-     * a crash after this call cannot lose the message.
-     */
     @Override
     public void storeMessage(Message m) {
         m.setStatus("STORED");
         if (storedCount < storedMessages.length)
             storedMessages[storedCount++] = m;
-        saveStoredToJson();                                 // write-through
+        saveStoredToJson();
     }
 
 
-    /**
-     * Returns a trimmed copy of the sent messages.
-     * Arrays.copyOf returns only the filled portion, so the caller does
-     * not see trailing nulls.
-     */
+    // ---------- Read APIs ----------
+
     @Override
     public Message[] getSentMessages() {
         return Arrays.copyOf(sentMessages, sentCount);
     }
 
+    @Override
+    public Message[] getStoredMessages() {
+        return Arrays.copyOf(storedMessages, storedCount);
+    }
 
-    /**
-     * Writes all stored messages to disk.
-     * Gson handles the Message[] -> JSON conversion automatically.
-     * Uses try-with-resources so the FileWriter closes even on error.
-     */
+
+    // ---------- JSON persistence ----------
+
     @Override
     public void saveStoredToJson() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -175,5 +137,120 @@ public class MessageManagerImpl implements MessageManager {
         } catch (IOException e) {
             System.err.println("Could not save JSON: " + e.getMessage());
         }
+    }
+
+    /**
+     * Reads {@code jsonFile} and repopulates the in-memory stored array.
+     * Safe when the file does not yet exist (first ever run).
+     */
+    @Override
+    public void loadStoredFromJson() {
+        File file = new File(jsonFile);
+        if (!file.exists()) return;
+
+        Gson gson = new Gson();
+        try (FileReader fr = new FileReader(file)) {
+            Message[] loaded = gson.fromJson(fr, Message[].class);
+            if (loaded == null) return;
+
+            int maxNum = 0;
+            for (Message m : loaded) {
+                if (m == null) continue;
+                if (storedCount < storedMessages.length) {
+                    storedMessages[storedCount++] = m;
+                }
+                if (m.getMessageNumber() > maxNum) maxNum = m.getMessageNumber();
+            }
+            messageCounter = maxNum;  // continue numbering without collision
+        } catch (IOException | JsonParseException e) {
+            System.err.println("Could not load JSON: " + e.getMessage());
+        }
+    }
+
+
+    // ---------- Part 3: report helpers ----------
+
+    @Override
+    public Message getLongestStoredMessage() {
+        if (storedCount == 0) return null;
+        Message longest = storedMessages[0];
+        int longestLen = bodyLength(longest);
+        for (int i = 1; i < storedCount; i++) {
+            int len = bodyLength(storedMessages[i]);
+            if (len > longestLen) {
+                longest    = storedMessages[i];
+                longestLen = len;
+            }
+        }
+        return longest;
+    }
+
+    private int bodyLength(Message m) {
+        return (m.getMessageBody() == null) ? 0 : m.getMessageBody().length();
+    }
+
+
+    @Override
+    public Message searchByMessageId(String id) {
+        if (id == null) return null;
+        for (int i = 0; i < storedCount; i++) {
+            if (id.equals(storedMessages[i].getMessageId())) return storedMessages[i];
+        }
+        return null;
+    }
+
+
+    @Override
+    public Message[] searchByRecipient(String recipient) {
+        if (recipient == null) return new Message[0];
+        Message[] found = new Message[storedCount];
+        int n = 0;
+        for (int i = 0; i < storedCount; i++) {
+            if (recipient.equals(storedMessages[i].getRecipient()))
+                found[n++] = storedMessages[i];
+        }
+        return Arrays.copyOf(found, n);
+    }
+
+
+    @Override
+    public boolean deleteByHash(String hash) {
+        if (hash == null) return false;
+        for (int i = 0; i < storedCount; i++) {
+            if (hash.equalsIgnoreCase(storedMessages[i].getMessageHash())) {
+                // shift left
+                for (int j = i; j < storedCount - 1; j++)
+                    storedMessages[j] = storedMessages[j + 1];
+                storedMessages[storedCount - 1] = null;
+                storedCount--;
+                saveStoredToJson();   // persist the deletion
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
+    public String buildReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("===== STORED MESSAGES REPORT =====\n");
+        if (storedCount == 0) {
+            sb.append("No stored messages.\n");
+            return sb.toString();
+        }
+        for (int i = 0; i < storedCount; i++) {
+            Message m = storedMessages[i];
+            String from = (m.getSender() == null) ? "(unknown)" : m.getSender();
+            sb.append("Message #").append(m.getMessageNumber()).append("\n");
+            sb.append("  ID:     ").append(m.getMessageId()).append("\n");
+            sb.append("  From:   ").append(from).append("\n");
+            sb.append("  To:     ").append(m.getRecipient()).append("\n");
+            sb.append("  Hash:   ").append(m.getMessageHash()).append("\n");
+            sb.append("  Body:   ").append(m.getMessageBody()).append("\n");
+            sb.append("  Status: ").append(m.getStatus()).append("\n");
+            sb.append("---\n");
+        }
+        return sb.toString();
     }
 }
